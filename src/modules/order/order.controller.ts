@@ -32,7 +32,7 @@ const getOrdersByUserId = catchAsync(async (req: Request, res: Response) => {
   if (!user) {
     throw new AppError("Unauthorized", 401);
   }
-  const result = await orderService.getAllOrdersByUserId(user);
+  const result = await orderService.getAllOrdersByuser(user);
 
   res.status(200).json({
     success: true,
@@ -56,7 +56,7 @@ const updateOrderStatus = catchAsync(async (req: Request, res: Response) => {
     throw new AppError("Missing parameters", 400);
   }
 
-  const result = await orderService.updateOrderStatus(status, orderId, productId, user);
+  const result = await orderService.updateOrderStatusSimple(orderId, status, user);
 
   res.status(200).json({
     success: true,

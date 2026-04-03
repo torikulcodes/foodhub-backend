@@ -6,8 +6,11 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
-  trustedOrigins(request) {
-    return [process.env.APP_URL || "http://localhost:3000"];
+  trustedOrigins() {
+    return [
+      "http://localhost:3000", // frontend
+      "http://localhost:5000", // backend
+    ];
   },
   user: {
     additionalFields: {

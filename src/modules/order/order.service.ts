@@ -5,105 +5,129 @@ import { CreateOrderPayload } from "../../type/product.type";
 import { User } from "../../type/user.type";
 import { UserRole } from "../../middleware/auth";
 const createOrder = async (data: CreateOrderPayload, user: User) => {
-  const { items, ...productData } = data;
+  const { items, deliveryAddress, phone, notes } = data;
 
   if (!items || items.length === 0) {
     throw new AppError("Order must contain at least one item", 400);
   }
 
-  const totalPrice = Number((productData as any).totalPrice);
-  const totalQuantity = Number((productData as any).totalQuantity);
-  const totalDiscount =
-    (productData as any).totalDiscount !== undefined
-      ? Number((productData as any).totalDiscount)
-      : 0;
-  const grandTotal = Number((productData as any).grandTotal);
-
-  if (
-    Number.isNaN(totalPrice) ||
-    Number.isNaN(totalQuantity) ||
-    Number.isNaN(totalDiscount) ||
-    Number.isNaN(grandTotal)
-  ) {
-    throw new AppError(
-      "You provide incorrect field type or missing fields",
-      400,
-    );
-  }
-
+  // 🔹 Step 1: Normalize items
   const normalizedItems = items.map((item) => {
     const productId = item.productId;
     const quantity = Number(item.quantity);
-    const price = Number(item.price);
-    const discount =
-      item.discount !== undefined ? Number(item.discount) : undefined;
 
-    if (!productId || Number.isNaN(quantity) || Number.isNaN(price)) {
-      throw new AppError(
-        "You provide incorrect field type or missing fields",
-        400,
-      );
+    if (!productId || Number.isNaN(quantity)) {
+      throw new AppError("Invalid item data", 400);
     }
 
     if (quantity < 1) {
       throw new AppError("Item quantity must be at least 1", 400);
     }
 
-    return { productId, quantity, price, discount };
+    return { productId, quantity };
   });
 
-  // Validate product ids exist
-  const productIds = Array.from(
-    new Set(normalizedItems.map((i) => i.productId)),
-  );
-  const existingProducts = await prisma.product.findMany({
+  // 🔹 Step 2: Get products from DB
+  const productIds = [...new Set(normalizedItems.map((i) => i.productId))];
+
+  const products = await prisma.product.findMany({
     where: { id: { in: productIds } },
-    select: { id: true },
   });
-  if (existingProducts.length !== productIds.length) {
+
+  if (products.length !== productIds.length) {
     throw new AppError("One or more product ids are invalid", 400);
   }
 
-  const order = await prisma.order.create({
-    data: {
-      totalPrice,
-      totalQuantity,
-      totalDiscount: totalDiscount ?? 0,
-      grandTotal,
-      deliveryAddress: (productData as any).deliveryAddress,
-      phone: (productData as any).phone,
-      notes: (productData as any).notes ?? null,
-      userId: user.id,
-      status: OrderStatus.PLACED,
-      items: {
-        create: normalizedItems.map((i) => ({
-          productId: i.productId,
-          quantity: i.quantity,
-          price: i.price,
-        })),
+  const productMap = new Map(products.map((p) => [p.id, p]));
+
+  // 🔹 Step 3: Calculate totals (SERVER SIDE 🔥)
+  let totalPrice = 0;
+  let totalQuantity = 0;
+  let totalDiscount = 0;
+
+  const finalItems = normalizedItems.map((item) => {
+    const product = productMap.get(item.productId);
+
+    if (!product) {
+      throw new AppError("Product not found", 400);
+    }
+
+    // 👉 Stock check
+    if ((product as any).stock < item.quantity) {
+      throw new AppError(
+        `Insufficient stock for product: ${(product as any).name}`,
+        400,
+      );
+    }
+
+    const price = Number((product as any).price);
+
+    totalPrice += price * item.quantity;
+    totalQuantity += item.quantity;
+
+    return {
+      productId: product.id,
+      quantity: item.quantity,
+      price,
+    };
+  });
+
+  const grandTotal = totalPrice - totalDiscount;
+
+  // 🔹 Step 4: Transaction (VERY IMPORTANT 🔥)
+  const order = await prisma.$transaction(async (tx) => {
+    // 👉 Create Order
+    const createdOrder = await tx.order.create({
+      data: {
+        userId: user.id,
+        totalPrice,
+        totalQuantity,
+        totalDiscount,
+        grandTotal,
+        deliveryAddress,
+        phone,
+        notes: notes ?? null,
+        status: OrderStatus.PLACED,
+        items: {
+          create: finalItems,
+        },
       },
-    },
-    include: {
-      items: {
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              price: true,
-              image: true,
-              providerId: true,
+      include: {
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                image: true,
+                providerId: true,
+              },
             },
           },
         },
       },
-    },
+    });
+
+    // 👉 Update stock
+    for (const item of finalItems) {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: {
+          stock: {
+            decrement: item.quantity,
+          },
+        },
+      });
+    }
+
+    return createdOrder;
   });
 
   return order;
 };
 
-const getAllOrdersByUserId = async (user: User) => {
+const getAllOrdersByuser = async (user: User) => {
   const orders = await prisma.order.findMany({
     where: {
       items: {
@@ -135,107 +159,138 @@ const getAllOrdersByUserId = async (user: User) => {
   return orders;
 };
 
-
 const calculateOrderStatus = (itemStatuses: OrderItemStatus[]): OrderStatus => {
   // Map OrderItemStatus array to overall OrderStatus
-  if (itemStatuses.every((s) => s === OrderItemStatus.CANCELLED)) return OrderStatus.CANCELLED;
-  if (itemStatuses.every((s) => s === OrderItemStatus.DELIVERED)) return OrderStatus.DELIVERED;
-  if (itemStatuses.some((s) => s === OrderItemStatus.DELIVERED)) return OrderStatus.PARTIALLY_DELIVERED;
-  if (itemStatuses.some((s) => s === OrderItemStatus.CANCELLED)) return OrderStatus.PARTIALLY_CANCELLED;
-  if (itemStatuses.every((s) => s === OrderItemStatus.SHIPPED)) return OrderStatus.SHIPPED;
-  if (itemStatuses.some((s) => s === OrderItemStatus.SHIPPED)) return OrderStatus.PARTIALLY_SHIPPED;
+  if (itemStatuses.every((s) => s === OrderItemStatus.CANCELLED))
+    return OrderStatus.CANCELLED;
+  if (itemStatuses.every((s) => s === OrderItemStatus.DELIVERED))
+    return OrderStatus.DELIVERED;
+  if (itemStatuses.some((s) => s === OrderItemStatus.DELIVERED))
+    return OrderStatus.PARTIALLY_DELIVERED;
+  if (itemStatuses.some((s) => s === OrderItemStatus.CANCELLED))
+    return OrderStatus.PARTIALLY_CANCELLED;
+  if (itemStatuses.every((s) => s === OrderItemStatus.SHIPPED))
+    return OrderStatus.SHIPPED;
+  if (itemStatuses.some((s) => s === OrderItemStatus.SHIPPED))
+    return OrderStatus.PARTIALLY_SHIPPED;
 
   return OrderStatus.PLACED;
 };
 
-const updateOrderStatus = async (
-  status: string,
+const updateOrderStatusSimple = async (
   orderId: string,
-  productId: string,
+  status: string,
   user: User,
 ) => {
-  // Validate incoming status
+  // ✅ Validate status
   if (!Object.values(OrderItemStatus).includes(status as OrderItemStatus)) {
-    throw new AppError("Invalid status value", 400);
+    throw new AppError("Invalid status", 400);
   }
+
   const newStatus = status as OrderItemStatus;
 
-  // Allowed transitions map
-  const allowedTransitions: Record<OrderItemStatus, OrderItemStatus[]> = {
-    [OrderItemStatus.PLACED]: [OrderItemStatus.PROCESSING, OrderItemStatus.CANCELLED],
-    [OrderItemStatus.PROCESSING]: [OrderItemStatus.SHIPPED, OrderItemStatus.CANCELLED],
-    [OrderItemStatus.SHIPPED]: [OrderItemStatus.DELIVERED, OrderItemStatus.RETURNED],
-    [OrderItemStatus.DELIVERED]: [],
-    [OrderItemStatus.CANCELLED]: [],
-    [OrderItemStatus.RETURNED]: [],
-  };
-
   return await prisma.$transaction(async (tx) => {
-    // Find order item and include product + order
-    const orderItem = await tx.orderItem.findFirst({
-      where: {
-        orderId,
-        productId,
-      },
+    // 🔹 Get order with items
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
       include: {
-        product: { select: { providerId: true } },
-        order: { select: { userId: true } },
+        items: {
+          include: {
+            product: {
+              select: { providerId: true },
+            },
+          },
+        },
       },
     });
 
-    if (!orderItem) {
-      throw new AppError("Order or product not found", 404);
+    if (!order) {
+      throw new AppError("Order not found", 404);
     }
 
-    const role = (user as any).role as string;
+    const role = (user as any).role;
 
-    if (role === UserRole.PROVIDER && orderItem.product.providerId !== user.id) {
-      throw new AppError("Forbidden: you don't manage this product", 403);
+    // 🔒 Permission check
+    if (role === UserRole.CUSTOMER && order.userId !== user.id) {
+      throw new AppError("Forbidden", 403);
     }
 
-    if (role === UserRole.CUSTOMER && orderItem.order.userId !== user.id) {
-      throw new AppError("Forbidden: you don't own this order", 403);
-    }
+    if (role === UserRole.PROVIDER) {
+      const hasAccess = order.items.some(
+        (item) => item.product.providerId === user.id,
+      );
 
-    // Prevent changing delivered/cancelled/returned items
-    const currentStatus = orderItem.status as OrderItemStatus;
-    if (
-      currentStatus === OrderItemStatus.DELIVERED ||
-      currentStatus === OrderItemStatus.CANCELLED ||
-      currentStatus === OrderItemStatus.RETURNED
-    ) {
-      throw new AppError("This order item cannot be updated", 400);
-    }
-
-    // Allow ADMIN or PROVIDER to set DELIVERED, but never allow direct PLACED -> DELIVERED
-    if (newStatus === OrderItemStatus.DELIVERED) {
-      if (role !== UserRole.ADMIN && role !== UserRole.PROVIDER) {
-        throw new AppError("Only admin or provider can set an item status to DELIVERED", 403);
-      }
-      if (orderItem.status === OrderItemStatus.PLACED) {
-        throw new AppError("Cannot set an item to DELIVERED directly from PLACED. Update status to SHIPPED first.", 400);
+      if (!hasAccess) {
+        throw new AppError("Forbidden", 403);
       }
     }
 
-    // Validate transition
-    if (orderItem.status !== newStatus) {
-      const allowed = allowedTransitions[orderItem.status as OrderItemStatus] || [];
-      if (!allowed.includes(newStatus)) {
-        throw new AppError(`Status transition from ${orderItem.status} to ${newStatus} is not allowed`, 400);
-      }
+    // 🚨 Prevent invalid updates
+    const invalidStatuses: OrderItemStatus[] = [
+      OrderItemStatus.DELIVERED,
+      OrderItemStatus.CANCELLED,
+      OrderItemStatus.RETURNED,
+    ];
+
+    const updatableItems = order.items.filter(
+      (item) => !invalidStatuses.includes(item.status as OrderItemStatus),
+    );
+
+    if (updatableItems.length === 0) {
+      throw new AppError("No items can be updated", 400);
     }
 
-    // Update the item status
-    await tx.orderItem.update({
-      where: { id: orderItem.id },
-      data: { status: newStatus },
+    // 🔹 Validate transition
+    const allowedTransitions: Record<OrderItemStatus, OrderItemStatus[]> = {
+      [OrderItemStatus.PLACED]: [
+        OrderItemStatus.PROCESSING,
+        OrderItemStatus.CANCELLED,
+      ],
+      [OrderItemStatus.PROCESSING]: [
+        OrderItemStatus.SHIPPED,
+        OrderItemStatus.CANCELLED,
+      ],
+      [OrderItemStatus.SHIPPED]: [
+        OrderItemStatus.DELIVERED,
+        OrderItemStatus.RETURNED,
+      ],
+      [OrderItemStatus.DELIVERED]: [],
+      [OrderItemStatus.CANCELLED]: [],
+      [OrderItemStatus.RETURNED]: [],
+    };
+
+    // 🔹 Update all items
+    for (const item of updatableItems) {
+      const current = item.status as OrderItemStatus;
+
+      if (current !== newStatus) {
+        const allowed = allowedTransitions[current] || [];
+
+        if (!allowed.includes(newStatus)) {
+          throw new AppError(
+            `Invalid transition from ${current} to ${newStatus}`,
+            400,
+          );
+        }
+      }
+
+      await tx.orderItem.update({
+        where: { id: item.id },
+        data: { status: newStatus },
+      });
+    }
+
+    // 🔹 Recalculate order status
+    const updatedItems = await tx.orderItem.findMany({
+      where: { orderId },
+      select: { status: true },
     });
 
-    // Recalculate order status
-    const updatedItems = await tx.orderItem.findMany({ where: { orderId }, select: { status: true } });
     const itemStatuses = updatedItems.map((i) => i.status as OrderItemStatus);
+
     const newOrderStatus = calculateOrderStatus(itemStatuses);
 
+    // 🔹 Update order
     const updatedOrder = await tx.order.update({
       where: { id: orderId },
       data: { status: newOrderStatus },
@@ -254,6 +309,6 @@ const updateOrderStatus = async (
 
 export const orderService = {
   createOrder,
-  getAllOrdersByUserId,
-  updateOrderStatus,
+  getAllOrdersByuser,
+  updateOrderStatusSimple,
 };

@@ -12,15 +12,15 @@ router.post(
 );
 router.get(
   "/",
-  auth(UserRole.ADMIN, UserRole.PROVIDER),
+  auth(UserRole.ADMIN, UserRole.PROVIDER, UserRole.CUSTOMER),
   orderController.getOrdersByUserId,
 );
 
 // Update specific order item's status
 router.patch(
-  "/:orderId/items/:productId/status/:status",
+  "/:orderId/status",
   auth(UserRole.ADMIN, UserRole.PROVIDER, UserRole.CUSTOMER),
-  orderController.updateOrderStatus,
+  orderController.updateOrderStatus
 );
 
 export const orderRouter: Router = router;
