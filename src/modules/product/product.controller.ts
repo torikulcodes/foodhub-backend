@@ -2,11 +2,10 @@ import { Request, Response } from "express";
 import catchAsync from "../../helper/catchAsync";
 import AppError from "../../middleware/error/app.error";
 import { CreateProduct } from "../../type/product.type";
-import { User } from "../../type/user.type";
 import { productService } from "./product.service";
 
 const createProduct = catchAsync(async (req: Request, res: Response) => {
-  const user: User | undefined = req.user;
+  const user = req.user;
   if (!user) throw new AppError("Unauthorized", 401);
 
   const {
@@ -16,13 +15,29 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
     image,
     description,
     isActive,
-    brandId,
     discount,
+    stock,
     diets,
   } = req.body;
 
-  if (!name || !categoryId || !price || !image) {
+  if (!name || !categoryId || price === undefined || price === null || !image) {
     throw new AppError("name, categoryId, price and image are required", 400);
+  }
+
+  if (typeof price !== "number" || Number.isNaN(price)) {
+    throw new AppError("price must be a number", 400);
+  }
+
+  if (discount !== undefined && discount !== null && typeof discount !== "number") {
+    throw new AppError("discount must be a number", 400);
+  }
+
+  if (stock !== undefined && stock !== null && typeof stock !== "number") {
+    throw new AppError("stock must be a number", 400);
+  }
+
+  if (isActive !== undefined && isActive !== null && typeof isActive !== "boolean") {
+    throw new AppError("isActive must be a boolean", 400);
   }
 
   const data: CreateProduct = {
@@ -31,9 +46,9 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
     price,
     image,
     description: description ?? null,
-    brandId: brandId ?? null,
     discount: discount ?? null,
     isActive: isActive ?? true,
+    stock: stock ?? undefined,
     diets: Array.isArray(diets) ? (diets as string[]) : undefined,
   };
 
@@ -45,8 +60,6 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 export const productController = {
   createProduct,
-
 };
