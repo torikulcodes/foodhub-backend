@@ -58,7 +58,17 @@ const createProduct = async (data: CreateProduct, user: User) => {
   return productWithDiets;
 };
 
+const getAllProducts = async () => prisma.product.findMany();
+
+const getProductById = async (id: string) =>
+  prisma.product.findUnique({ where: { id } });
+
+const getOwnProduct = async (user: User) =>
+  prisma.product.findMany({ where: { providerId: user.id } });
 
 export const productService = {
   createProduct,
+  getAllProducts,
+  getProductById,
+  getOwnProduct,
 };

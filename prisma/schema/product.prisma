@@ -23,6 +23,7 @@ model Product {
   @@index([categoryId])
   @@index([providerId])
   @@index([isActive])
+  @@unique([name, providerId, categoryId])
 }
 
 

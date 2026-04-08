@@ -10,6 +10,18 @@ router.post(
   productController.createProduct,
 );
 
-// router.get("/", productController);
+router.get("/", productController.getAllProducts);
+
+router.get(
+  "/my-products",
+  auth(UserRole.ADMIN, UserRole.PROVIDER, UserRole.CUSTOMER),
+  productController.getOwnProduct,
+);
+
+router.get(
+  "/:id",
+  auth(UserRole.ADMIN, UserRole.PROVIDER, UserRole.CUSTOMER),
+  productController.getProductById,
+);
 
 export const productRouter = router;

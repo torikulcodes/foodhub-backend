@@ -28,7 +28,11 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
     throw new AppError("price must be a number", 400);
   }
 
-  if (discount !== undefined && discount !== null && typeof discount !== "number") {
+  if (
+    discount !== undefined &&
+    discount !== null &&
+    typeof discount !== "number"
+  ) {
     throw new AppError("discount must be a number", 400);
   }
 
@@ -36,7 +40,11 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
     throw new AppError("stock must be a number", 400);
   }
 
-  if (isActive !== undefined && isActive !== null && typeof isActive !== "boolean") {
+  if (
+    isActive !== undefined &&
+    isActive !== null &&
+    typeof isActive !== "boolean"
+  ) {
     throw new AppError("isActive must be a boolean", 400);
   }
 
@@ -60,6 +68,38 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllProducts = catchAsync(async (req: Request, res: Response) => {
+  const products = await productService.getAllProducts();
+  res.status(200).json({
+    status: "success",
+    results: products.length,
+    data: products,
+  });
+});
+
+const getOwnProduct = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) throw new AppError("Unauthorized", 401);
+  const products = await productService.getOwnProduct(user);
+  res.status(200).json({
+    status: "success",
+    results: products.length,
+    data: products,
+  });
+});
+
+const getProductById = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const product = await productService.getProductById(id as string);
+  res.status(200).json({
+    status: "success",
+    data: product,
+  });
+});
+
 export const productController = {
   createProduct,
+  getAllProducts,
+  getOwnProduct,
+  getProductById,
 };
