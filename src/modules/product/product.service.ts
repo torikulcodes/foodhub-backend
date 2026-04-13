@@ -2,6 +2,9 @@ import { prisma } from "../../lib/prisma";
 import { CreateProduct } from "../../type/product.type";
 import { User } from "../../type/user.type";
 import AppError from "../../middleware/error/app.error";
+import { QueryBuilder } from "../../helper/queryBuilder";
+import { Prisma, Product } from "../../../generated/prisma/client";
+import { IQueryParams } from "../../type/queryBuilder";
 
 const createProduct = async (data: CreateProduct, user: User) => {
   const { diets, ...productData } = data;
@@ -58,13 +61,124 @@ const createProduct = async (data: CreateProduct, user: User) => {
   return productWithDiets;
 };
 
-const getAllProducts = async () => prisma.product.findMany();
+type ProductWithRelations = Prisma.ProductGetPayload<{
+  include: {
+    diets: { include: { diet: { select: { name: true; id: true } } } };
+    category: { select: { name: true; id: true } };
+  };
+}>;
 
-const getProductById = async (id: string) =>
-  prisma.product.findUnique({ where: { id } });
+const getAllProducts = async (query: IQueryParams) => {
+  const queryBuilder = new QueryBuilder<
+    Product,
+    Prisma.ProductWhereInput,
+    Prisma.ProductInclude
+  >(prisma.product, query, {
+    searchableFields: ["name", "category.name"],
+    filterableFields: ["categoryId"],
+  });
 
-const getOwnProduct = async (user: User) =>
-  prisma.product.findMany({ where: { providerId: user.id } });
+  const result = await queryBuilder
+    .filter()
+    .where({ isActive: true })
+    .include({
+      diets: { include: { diet: { select: { name: true, id: true } } } },
+      category: { select: { name: true, id: true } },
+    })
+    .search()
+    .paginate()
+    .sort()
+    .execute();
+
+  // এখানে টাইপ কাস্টিং করে দিন যাতে p.category এর সাজেশন পান
+  const formattedData = (result.data as ProductWithRelations[]).map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    discount: p.discount,
+    image: p.image,
+    description: p.description,
+    stock: p.stock,
+    category: p.category?.name || "Uncategorized",
+    categoryId: p.categoryId,
+    diets: p.diets.map((d) => ({
+      id: d.diet.id,
+      name: d.diet.name,
+    })),
+  }));
+
+  // শুধুমাত্র formattedData না পাঠিয়ে object আকারে পাঠান
+  return {
+    data: formattedData,
+    meta: result.meta,
+  };
+};
+
+const getProductById = async (id: string) => {
+  const data = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      diets: {
+        include: {
+          diet: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+        },
+      },
+      category: {
+        select: {
+          name: true,
+          id: true,
+        },
+      },
+    },
+  });
+
+  return data;
+};
+
+const getOwnProduct = async (user: User, query: IQueryParams) => {
+  const queryBuilder = new QueryBuilder<
+    Product,
+    Prisma.ProductWhereInput,
+    Prisma.ProductInclude
+  >(prisma.product, query, {
+    searchableFields: ["name", "category.name"],
+    filterableFields: ["categoryId"],
+  });
+
+  return await queryBuilder
+    .filter()
+    .where({
+      isActive: true,
+      providerId: user.id,
+    })
+    .include({
+      diets: {
+        include: {
+          diet: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+        },
+      },
+      category: {
+        select: {
+          name: true,
+          id: true,
+        },
+      },
+    })
+    .search()
+    .paginate()
+    .sort()
+    .execute();
+};
 
 export const productService = {
   createProduct,
