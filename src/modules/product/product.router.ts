@@ -20,7 +20,7 @@ router.get(
 
 router.get(
   "/:id",
-  auth(UserRole.ADMIN, UserRole.PROVIDER, UserRole.CUSTOMER),
+
   productController.getProductById,
 );
 

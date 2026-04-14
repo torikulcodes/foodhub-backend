@@ -134,11 +134,18 @@ const getProductById = async (id: string) => {
           id: true,
         },
       },
+   provider:{
+    select:{
+      name:true,
+      
+    }
+   }
     },
   });
 
   return data;
 };
+
 
 const getOwnProduct = async (user: User, query: IQueryParams) => {
   const queryBuilder = new QueryBuilder<
