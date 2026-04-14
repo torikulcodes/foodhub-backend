@@ -10,6 +10,7 @@ import { providerProfileRouter } from "./modules/providerProfile/provider.router
 import { productRouter } from "./modules/product/product.router";
 import { dietRouter } from "./modules/diets/diets.router";
 import { orderRouter } from "./modules/order/order.router";
+import { cartRouter } from "./modules/cart/cart.route";
 
 const app: Application = express();
 
@@ -29,6 +30,7 @@ app.use("/api/v1/providerProfile", providerProfileRouter);
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/diets", dietRouter);
 app.use("/api/v1/orders", orderRouter);
+app.use("/api/v1/cart", cartRouter);
 
 app.get("/", (req, res) => {
   res.send("FoodHub Backend is running");
