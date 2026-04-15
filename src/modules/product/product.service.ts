@@ -3,7 +3,7 @@ import { CreateProduct } from "../../type/product.type.js";
 import { User } from "../../type/user.type.js";
 import AppError from "../../middleware/error/app.error.js";
 import { QueryBuilder } from "../../helper/queryBuilder.js";
-import { Prisma, Product } from "../../../generated/prisma/client.js";
+import { Prisma, Product } from "../../../generated/prisma/client";
 import { IQueryParams } from "../../type/queryBuilder.js";
 
 const createProduct = async (data: CreateProduct, user: User) => {
@@ -89,6 +89,8 @@ const getAllProducts = async (query: IQueryParams) => {
     .paginate()
     .sort()
     .execute();
+
+    console.log(result)
 
   // এখানে টাইপ কাস্টিং করে দিন যাতে p.category এর সাজেশন পান
   const formattedData = (result.data as ProductWithRelations[]).map((p) => ({

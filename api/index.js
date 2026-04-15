@@ -332,18 +332,15 @@ var adapter = new PrismaPg({ connectionString });
 var prisma = new PrismaClient({ adapter });
 
 // src/lib/auth.ts
+var isProd = process.env.NODE_ENV === "production";
 var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
   }),
-  trustedOrigins() {
-    return [
-      "http://localhost:3000",
-      // frontend
-      "https://foodhub-backend-eta.vercel.app/"
-      // backend
-    ];
-  },
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://foodhub-client-eta.vercel.app"
+  ],
   user: {
     additionalFields: {
       role: {
@@ -362,6 +359,26 @@ var auth = betterAuth({
     enabled: true,
     autoSignIn: false,
     requireEmailVerification: false
+  },
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 60 * 24 * 7
+      // 1 week
+    }
+  },
+  advanced: {
+    cookiePrefix: "better-auth",
+    useSecureCookies: process.env.NODE_ENV === "production",
+    crossSubDomainCookies: {
+      enabled: false
+    },
+    disableCSRFCheck: true,
+    cookieOptions: {
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
+      httpOnly: true
+    }
   }
 });
 
@@ -527,13 +544,6 @@ var createCategory2 = async (req, res, next) => {
 };
 var getAllCategories2 = async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(401).json({
-        status: false,
-        message: "Unauthorized"
-      });
-    }
     const categories = await categoryService.getAllCategories();
     res.status(200).json({
       message: "Categories retrieved successfully",
@@ -551,8 +561,12 @@ var categoryController = {
 
 // src/modules/category/category.router.ts
 var router2 = Router2();
-router2.post("/", auth_default("ADMIN" /* ADMIN */, "PROVIDER" /* PROVIDER */), categoryController.createCategory);
-router2.get("/", auth_default("ADMIN" /* ADMIN */, "PROVIDER" /* PROVIDER */), categoryController.getAllCategories);
+router2.post(
+  "/",
+  auth_default("ADMIN" /* ADMIN */, "PROVIDER" /* PROVIDER */),
+  categoryController.createCategory
+);
+router2.get("/", categoryController.getAllCategories);
 var categoryRouter = router2;
 
 // src/modules/providerProfile/provider.router.ts
@@ -1117,6 +1131,7 @@ var getAllProducts = async (query) => {
     diets: { include: { diet: { select: { name: true, id: true } } } },
     category: { select: { name: true, id: true } }
   }).search().paginate().sort().execute();
+  console.log(result);
   const formattedData = result.data.map((p) => ({
     id: p.id,
     name: p.name,
@@ -1990,11 +2005,26 @@ var globalErrorHandler_default = errorHandler;
 
 // src/app.ts
 var app = express();
+var allowedOrigins = [
+  process.env.APP_URL,
+  "http://localhost:3000",
+  "https://foodhub-client-eta.vercel.app"
+].filter(Boolean);
 app.use(
   cors({
-    origin: process.env.App_URL || "https://foodhub-backend-eta.vercel.app",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const isAllowed = allowedOrigins.includes(origin) || /^https:\/\/next-blog-client.*\.vercel\.app$/.test(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin);
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"]
   })
 );
 app.all("/api/auth/*splat", toNodeHandler(auth));
