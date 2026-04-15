@@ -10,10 +10,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "target": "ES2023",
-    "types": [],
     // For nodejs:
     // "lib": ["esnext"],
-    // "types": ["node"],
+    "types": ["node"],
     // and npm install -D @types/node
 
     // Other Outputs
@@ -43,6 +42,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*"],
+  // tsconfig.json er onnanno settings...
+  "include": ["src/**/*", "prisma.config.ts", "prisma/**/*"],
   "exclude": ["node_modules", "dist", "generated/prisma"]
 }

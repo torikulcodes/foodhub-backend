@@ -1,20 +1,4 @@
-// model Cart {
-//   id        String     @id @default(uuid())
-//   createdAt DateTime   @default(now())
-//   updatedAt DateTime   @updatedAt
-//   userId    String     @unique
-//   user      User       @relation("UserCarts", fields: [userId], references: [id])
-//   items     CartItem[]
-// }
 
-// model CartItem {
-//   id        String  @id @default(uuid())
-//   cartId    String
-//   productId String
-//   quantity  Int
-//   cart      Cart    @relation(fields: [cartId], references: [id])
-//   product   Product @relation("cartItemToProduct", fields: [productId], references: [id])
-// }
 
 export interface cartData {
   productId: string;
