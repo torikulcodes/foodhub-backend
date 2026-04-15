@@ -1,0 +1,35 @@
+import { toNodeHandler } from "better-auth/node";
+import express from "express";
+import { auth } from "./lib/auth";
+import cors from "cors";
+import { notFound } from "./middleware/notFound";
+import { userRouter } from "./modules/user/user.router";
+import errorHandler from "./middleware/error/globalErrorHandler";
+import { categoryRouter } from "./modules/category/category.router";
+import { providerProfileRouter } from "./modules/providerProfile/provider.router";
+import { productRouter } from "./modules/product/product.router";
+import { dietRouter } from "./modules/diets/diets.router";
+import { orderRouter } from "./modules/order/order.router";
+import { cartRouter } from "./modules/cart/cart.route";
+const app = express();
+app.use(cors({
+    origin: process.env.App_URL || "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+}));
+app.all("/api/auth/*splat", toNodeHandler(auth));
+app.use(express.json());
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/category", categoryRouter);
+app.use("/api/v1/providerProfile", providerProfileRouter);
+app.use("/api/v1/products", productRouter);
+app.use("/api/v1/diets", dietRouter);
+app.use("/api/v1/orders", orderRouter);
+app.use("/api/v1/cart", cartRouter);
+app.get("/", (req, res) => {
+    res.send("FoodHub Backend is running");
+});
+app.use(notFound);
+app.use(errorHandler);
+export default app;
+//# sourceMappingURL=app.js.map
