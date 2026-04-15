@@ -56,7 +56,7 @@ app.use("/api/v1/cart", cartRouter);
 
 app.get("/", (req, res) => {
   res.send("FoodHub Backend is running");
-  console.log("DB URL Check:", process.env.DATABASE_URL ? "Exists" : "Missing");
+
 });
 
 app.use(notFound);
