@@ -2,6 +2,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma.js";
 
+const isProd = process.env.NODE_ENV === "production";
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -12,7 +14,6 @@ export const auth = betterAuth({
       "http://localhost:3000",
       "https://foodhub-client-eta.vercel.app",
       // frontend
-      "https://foodhub-backend-eta.vercel.app", // backend
     ];
   },
 
@@ -49,5 +50,10 @@ export const auth = betterAuth({
       enabled: false,
     },
     disableCSRFCheck: true,
+    cookieOptions: {
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
+      httpOnly: true,
+    },
   },
 });
