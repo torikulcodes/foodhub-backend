@@ -16,7 +16,7 @@ const app: Application = express();
 
 app.use(
   cors({
-    origin: process.env.App_URL || "http://localhost:3000",
+    origin: process.env.App_URL || "https://foodhub-backend-eta.vercel.app",
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   }),
