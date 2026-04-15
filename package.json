@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "vercel-build": "prisma generate && tsc",
-    "build": "prisma generate && tsup src/index.ts --format esm --platform node --target node20 --outDir api --external pg-native",
-    "postinstall": "prisma generate"
+    "build": "npx prisma-import -s 'prisma/**/*.prisma' -o prisma/schema.prisma && prisma generate && tsup src/index.ts --format esm --platform node --target node20 --outDir api --external pg-native",
+    "start": "node api/index.js",
+    "postinstall": "npx prisma-import -s 'prisma/**/*.prisma' -o prisma/schema.prisma && prisma generate"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +32,7 @@
     "express": "^5.2.1",
     "http-status-codes": "^2.3.0",
     "pg": "^8.18.0",
+    "prisma-import": "^1.0.5",
     "tsup": "^8.5.1"
   }
 }
