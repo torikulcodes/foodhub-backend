@@ -9,13 +9,10 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
-  trustedOrigins() {
-    return [
-      "http://localhost:3000",
-      "https://foodhub-client-eta.vercel.app",
-      // frontend
-    ];
-  },
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://foodhub-client-eta.vercel.app",
+  ],
 
   user: {
     additionalFields: {
