@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { Prisma } from "../../../generated/prisma/client";
-import AppError from "./app.error";
+import { Prisma } from "../../../generated/prisma/client.js";
+import AppError from "./app.error.js";
 
 function errorHandler(
   err: any,

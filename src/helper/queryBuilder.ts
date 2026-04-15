@@ -8,7 +8,7 @@ import {
   PrismaNumberFilter,
   PrismaStringFilter,
   PrismaWhereConditions,
-} from "../type/queryBuilder";
+} from "../type/queryBuilder.js";
 
 // T = Model Type
 export class QueryBuilder<
