@@ -8,7 +8,7 @@ export const auth = betterAuth({
 
   trustedOrigins() {
     return [
-      "http://localhost:3000", // frontend
+      "https://foodhub-backend-eta.vercel.app/", // frontend
       "http://localhost:5000", // backend
     ];
   },
