@@ -1,7 +1,7 @@
-import { normalizeName } from "../../helper/normalize";
-import { prisma } from "../../lib/prisma";
-import AppError from "../../middleware/error/app.error";
-import { Category } from "../../type/product.type";
+import { normalizeName } from "../../helper/normalize.js";
+import { prisma } from "../../lib/prisma.js";
+import AppError from "../../middleware/error/app.error.js";
+import { Category } from "../../type/product.type.js";
 
 // create a category
 const createCategory = async (data: Category) => {

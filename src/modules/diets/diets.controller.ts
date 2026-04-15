@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import catchAsync from "../../helper/catchAsync";
-import { prisma } from "../../lib/prisma";
-import { dietService } from "./diets.service";
+import catchAsync from "../../helper/catchAsync.js";
+import { prisma } from "../../lib/prisma.js";
+import { dietService } from "./diets.service.js";
 
 const createDiet = catchAsync(async (req: Request, res: Response) => {
   const data = req.body;

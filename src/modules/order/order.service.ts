@@ -1,9 +1,12 @@
-import { OrderStatus, OrderItemStatus } from "../../../generated/prisma/enums";
-import { prisma } from "../../lib/prisma";
-import AppError from "../../middleware/error/app.error";
-import { CreateOrderPayload } from "../../type/product.type";
-import { User } from "../../type/user.type";
-import { UserRole } from "../../middleware/auth";
+import {
+  OrderStatus,
+  OrderItemStatus,
+} from "../../../generated/prisma/enums.js";
+import { prisma } from "../../lib/prisma.js";
+import AppError from "../../middleware/error/app.error.js";
+import { CreateOrderPayload } from "../../type/product.type.js";
+import { User } from "../../type/user.type.js";
+import { UserRole } from "../../middleware/auth.js";
 const createOrder = async (data: CreateOrderPayload, user: User) => {
   const { items, deliveryAddress, phone, notes } = data;
 
@@ -12,7 +15,7 @@ const createOrder = async (data: CreateOrderPayload, user: User) => {
   }
 
   // 🔹 Step 1: Normalize items
-  const normalizedItems = items.map((item) => {
+  const normalizedItems = items.map((item: any) => {
     const productId = item.productId;
     const quantity = Number(item.quantity);
 
@@ -38,14 +41,15 @@ const createOrder = async (data: CreateOrderPayload, user: User) => {
     throw new AppError("One or more product ids are invalid", 400);
   }
 
-  const productMap = new Map(products.map((p) => [p.id, p]));
+  // map-er type define korun [key, value]
+  const productMap = new Map<string, any>(products.map((p: any) => [p.id, p]));
 
   // 🔹 Step 3: Calculate totals (SERVER SIDE 🔥)
   let totalPrice = 0;
   let totalQuantity = 0;
   let totalDiscount = 0;
 
-  const finalItems = normalizedItems.map((item) => {
+  const finalItems = normalizedItems.map((item: any) => {
     const product = productMap.get(item.productId);
 
     if (!product) {
@@ -75,7 +79,7 @@ const createOrder = async (data: CreateOrderPayload, user: User) => {
   const grandTotal = totalPrice - totalDiscount;
 
   // 🔹 Step 4: Transaction (VERY IMPORTANT 🔥)
-  const order = await prisma.$transaction(async (tx) => {
+  const order = await prisma.$transaction(async (tx: any) => {
     // 👉 Create Order
     const createdOrder = await tx.order.create({
       data: {
@@ -189,7 +193,7 @@ const updateOrderStatusSimple = async (
 
   const newStatus = status as OrderItemStatus;
 
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: any) => {
     // 🔹 Get order with items
     const order = await tx.order.findUnique({
       where: { id: orderId },
@@ -217,7 +221,7 @@ const updateOrderStatusSimple = async (
 
     if (role === UserRole.PROVIDER) {
       const hasAccess = order.items.some(
-        (item) => item.product.providerId === user.id,
+        (item: any) => item.product.providerId === user.id,
       );
 
       if (!hasAccess) {
@@ -233,7 +237,7 @@ const updateOrderStatusSimple = async (
     ];
 
     const updatableItems = order.items.filter(
-      (item) => !invalidStatuses.includes(item.status as OrderItemStatus),
+      (item: any) => !invalidStatuses.includes(item.status as OrderItemStatus),
     );
 
     if (updatableItems.length === 0) {
@@ -286,7 +290,9 @@ const updateOrderStatusSimple = async (
       select: { status: true },
     });
 
-    const itemStatuses = updatedItems.map((i) => i.status as OrderItemStatus);
+    const itemStatuses = updatedItems.map(
+      (i: any) => i.status as OrderItemStatus,
+    );
 
     const newOrderStatus = calculateOrderStatus(itemStatuses);
 

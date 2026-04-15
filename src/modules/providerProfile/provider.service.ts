@@ -1,6 +1,6 @@
-import { ProviderProfile } from "../../../generated/prisma/client";
-import { prisma } from "../../lib/prisma";
-import { UpdateProviderProfile, User } from "../../type/user.type";
+import { ProviderProfile } from "../../../generated/prisma/client.js";
+import { prisma } from "../../lib/prisma.js";
+import { UpdateProviderProfile, User } from "../../type/user.type.js";
 
 const createProviderProfile = async (data: ProviderProfile, user: User) => {
   // Implementation for creating provider profile

@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import catchAsync from "../../helper/catchAsync";
-import AppError from "../../middleware/error/app.error";
-import { cartService } from "./cart.service";
+import catchAsync from "../../helper/catchAsync.js";
+import AppError from "../../middleware/error/app.error.js";
+import { cartService } from "./cart.service.js";
 import { User } from "better-auth";
-import { sendResponse } from "../../helper/sendResponse";
+import { sendResponse } from "../../helper/sendResponse.js";
 import { StatusCodes } from "http-status-codes";
 
 const addToCart = catchAsync(async (req: Request, res: Response) => {

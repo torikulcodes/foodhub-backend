@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import catchAsync from "../../helper/catchAsync";
-import AppError from "../../middleware/error/app.error";
-import { providerProfileService } from "./provider.service";
-import { prisma } from "../../lib/prisma";
+import catchAsync from "../../helper/catchAsync.js";
+import AppError from "../../middleware/error/app.error.js";
+import { providerProfileService } from "./provider.service.js";
+import { prisma } from "../../lib/prisma.js";
 
 const createProviderProfile = catchAsync(
   async (req: Request, res: Response) => {

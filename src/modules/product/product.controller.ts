@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import catchAsync from "../../helper/catchAsync";
-import AppError from "../../middleware/error/app.error";
-import { CreateProduct } from "../../type/product.type";
-import { productService } from "./product.service";
-import { IQueryParams } from "../../type/queryBuilder";
-import { sendResponse } from "../../helper/sendResponse";
+import catchAsync from "../../helper/catchAsync.js";
+import AppError from "../../middleware/error/app.error.js";
+import { CreateProduct } from "../../type/product.type.js";
+import { productService } from "./product.service.js";
+import { IQueryParams } from "../../type/queryBuilder.js";
+import { sendResponse } from "../../helper/sendResponse.js";
 import { StatusCodes } from "http-status-codes";
 
 const createProduct = catchAsync(async (req: Request, res: Response) => {

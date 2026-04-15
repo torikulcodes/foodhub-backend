@@ -1,10 +1,10 @@
-import { prisma } from "../../lib/prisma";
-import { CreateProduct } from "../../type/product.type";
-import { User } from "../../type/user.type";
-import AppError from "../../middleware/error/app.error";
-import { QueryBuilder } from "../../helper/queryBuilder";
-import { Prisma, Product } from "../../../generated/prisma/client";
-import { IQueryParams } from "../../type/queryBuilder";
+import { prisma } from "../../lib/prisma.js";
+import { CreateProduct } from "../../type/product.type.js";
+import { User } from "../../type/user.type.js";
+import AppError from "../../middleware/error/app.error.js";
+import { QueryBuilder } from "../../helper/queryBuilder.js";
+import { Prisma, Product } from "../../../generated/prisma/client.js";
+import { IQueryParams } from "../../type/queryBuilder.js";
 
 const createProduct = async (data: CreateProduct, user: User) => {
   const { diets, ...productData } = data;
@@ -24,7 +24,7 @@ const createProduct = async (data: CreateProduct, user: User) => {
     dietIds = uniqueDietIds;
   }
 
-  const productWithDiets = await prisma.$transaction(async (tx) => {
+  const productWithDiets = await prisma.$transaction(async (tx:any) => {
     const product = await tx.product.create({
       data: {
         ...productData,
@@ -101,7 +101,7 @@ const getAllProducts = async (query: IQueryParams) => {
     stock: p.stock,
     category: p.category?.name || "Uncategorized",
     categoryId: p.categoryId,
-    diets: p.diets.map((d) => ({
+    diets: p.diets.map((d: any) => ({
       id: d.diet.id,
       name: d.diet.name,
     })),

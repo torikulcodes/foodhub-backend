@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import catchAsync from "../../helper/catchAsync";
-import AppError from "../../middleware/error/app.error";
-import { orderService } from "./order.service";
+import catchAsync from "../../helper/catchAsync.js";
+import AppError from "../../middleware/error/app.error.js";
+import { orderService } from "./order.service.js";
 
 // Create a new order
 const createOrder = catchAsync(async (req: Request, res: Response) => {

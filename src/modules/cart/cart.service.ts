@@ -1,7 +1,7 @@
 import { User } from "better-auth";
-import { cartData } from "./cart.interface";
-import { prisma } from "../../lib/prisma";
-import AppError from "../../middleware/error/app.error";
+import { cartData } from "./cart.interface.js";
+import { prisma } from "../../lib/prisma.js";
+import AppError from "../../middleware/error/app.error.js";
 
 const addToCart = async (payload: cartData[], user: any) => {
   const userId = user.id || user._id;
@@ -14,7 +14,7 @@ const addToCart = async (payload: cartData[], user: any) => {
 
   if (!validUser) throw new Error("User not found");
 
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: any) => {
     let cart = await tx.cart.findFirst({
       where: { userId: userId },
     });

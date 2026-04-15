@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { prisma } from "../../lib/prisma";
+import { prisma } from "../../lib/prisma.js";
 
-import { categoryService } from "./category.service";
+import { categoryService } from "./category.service.js";
 
 const createCategory = async (req: Request, res: Response, next: Function) => {
   try {
