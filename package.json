@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "vercel-build": "prisma generate && tsc",
-    "build": "tsc",
+    "build": "prisma generate && tsup src/index.ts --format esm --platform node --target node20 --outDir api --external pg-native",
     "postinstall": "prisma generate"
   },
   "keywords": [],
@@ -31,6 +31,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "http-status-codes": "^2.3.0",
-    "pg": "^8.18.0"
+    "pg": "^8.18.0",
+    "tsup": "^8.5.1"
   }
 }

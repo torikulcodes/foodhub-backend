@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "outDir": "./dist",
-    "module": "nodenext",
+    "module": "esnext",
     /* Change moduleResolution to NodeNext for better ESM support */
-    "moduleResolution": "NodeNext", 
+    "moduleResolution": "bundler", 
     "target": "ES2023",
     "types": ["node"],
     
