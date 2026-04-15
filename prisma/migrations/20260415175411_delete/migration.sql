@@ -1,8 +1,11 @@
 -- CreateEnum
-CREATE TYPE "OrderStatus" AS ENUM ('PLACED', 'PREPARING', 'READY', 'DELIVERED', 'CANCELLED');
+CREATE TYPE "OrderStatus" AS ENUM ('PLACED', 'PROCESSING', 'PARTIALLY_SHIPPED', 'SHIPPED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'PARTIALLY_CANCELLED', 'CANCELLED');
 
 -- CreateEnum
-CREATE TYPE "ReviewStatus" AS ENUM ('APPROVED', 'REJECT');
+CREATE TYPE "OrderItemStatus" AS ENUM ('PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'RETURNED');
+
+-- CreateEnum
+CREATE TYPE "ReviewStatus" AS ENUM ('APPROVED', 'REJECTED');
 
 -- CreateTable
 CREATE TABLE "user" (
@@ -13,7 +16,7 @@ CREATE TABLE "user" (
     "image" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "role" TEXT NOT NULL DEFAULT 'USER',
+    "role" TEXT NOT NULL DEFAULT 'CUSTOMER',
     "status" TEXT NOT NULL DEFAULT 'ACTIVE',
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
@@ -65,24 +68,6 @@ CREATE TABLE "verification" (
 );
 
 -- CreateTable
-CREATE TABLE "Brand" (
-    "id" TEXT NOT NULL,
-    "name" VARCHAR(100) NOT NULL,
-    "slug" TEXT NOT NULL,
-    "description" VARCHAR(255),
-    "image" TEXT NOT NULL,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "website" TEXT,
-    "instagram" TEXT,
-    "discount" INTEGER,
-    "facebook" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Brand_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Cart" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -103,43 +88,15 @@ CREATE TABLE "CartItem" (
 );
 
 -- CreateTable
-CREATE TABLE "Category" (
-    "id" TEXT NOT NULL,
-    "name" VARCHAR(50) NOT NULL,
-    "slug" VARCHAR(50) NOT NULL,
-    "image" TEXT NOT NULL,
-    "description" VARCHAR(255),
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "discount" INTEGER,
-    "discountStart" TIMESTAMP(3),
-    "discountEnd" TIMESTAMP(3),
-    "providerId" TEXT NOT NULL,
-    "order" INTEGER DEFAULT 0,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "OrderItem" (
-    "id" TEXT NOT NULL,
-    "orderId" TEXT NOT NULL,
-    "productId" TEXT NOT NULL,
-    "status" "OrderStatus" NOT NULL DEFAULT 'PLACED',
-    "quantity" INTEGER NOT NULL,
-    "price" DOUBLE PRECISION NOT NULL,
-
-    CONSTRAINT "OrderItem_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Order" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "providerId" TEXT,
     "status" "OrderStatus" NOT NULL DEFAULT 'PLACED',
-    "total" DOUBLE PRECISION NOT NULL,
+    "totalPrice" DOUBLE PRECISION NOT NULL,
+    "totalQuantity" INTEGER NOT NULL,
+    "totalDiscount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "grandTotal" DOUBLE PRECISION NOT NULL,
+    "canReturn" BOOLEAN NOT NULL DEFAULT false,
     "canCancel" BOOLEAN NOT NULL DEFAULT true,
     "cancelledAt" TIMESTAMP(3),
     "notes" TEXT,
@@ -147,9 +104,20 @@ CREATE TABLE "Order" (
     "phone" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "productId" TEXT,
 
     CONSTRAINT "Order_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "OrderItem" (
+    "id" TEXT NOT NULL,
+    "orderId" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL,
+    "price" DOUBLE PRECISION NOT NULL,
+    "status" "OrderItemStatus" NOT NULL DEFAULT 'PLACED',
+
+    CONSTRAINT "OrderItem_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -158,11 +126,13 @@ CREATE TABLE "Product" (
     "name" TEXT NOT NULL,
     "price" DOUBLE PRECISION NOT NULL,
     "image" TEXT NOT NULL,
-    "discount" INTEGER,
+    "discount" INTEGER DEFAULT 0,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "description" TEXT,
+    "views" INTEGER NOT NULL DEFAULT 0,
+    "ordersCount" INTEGER NOT NULL DEFAULT 0,
+    "stock" INTEGER NOT NULL DEFAULT 0,
     "categoryId" TEXT NOT NULL,
-    "brandId" TEXT,
     "providerId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -171,28 +141,50 @@ CREATE TABLE "Product" (
 );
 
 -- CreateTable
-CREATE TABLE "Stock" (
+CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
-    "productId" TEXT NOT NULL,
-    "quantity" INTEGER NOT NULL DEFAULT 0,
-    "warehouse" TEXT,
-    "batch" TEXT,
+    "name" VARCHAR(100) NOT NULL,
+    "slug" VARCHAR(100) NOT NULL,
+    "image" TEXT,
+    "description" VARCHAR(255),
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "orderCount" INTEGER DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Stock_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Diet" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "description" VARCHAR(255),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Diet_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProductDiet" (
+    "productId" TEXT NOT NULL,
+    "dietId" TEXT NOT NULL,
+
+    CONSTRAINT "ProductDiet_pkey" PRIMARY KEY ("productId","dietId")
 );
 
 -- CreateTable
 CREATE TABLE "ProviderProfile" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "providerId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "logo" TEXT,
     "coverImage" TEXT,
     "description" TEXT,
     "phone" TEXT NOT NULL,
-    "email" TEXT,
     "address" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "workingHours" TEXT,
@@ -234,19 +226,13 @@ CREATE INDEX "account_userId_idx" ON "account"("userId");
 CREATE INDEX "verification_identifier_idx" ON "verification"("identifier");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Brand_slug_key" ON "Brand"("slug");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Cart_userId_key" ON "Cart"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");
+CREATE UNIQUE INDEX "CartItem_cartId_productId_key" ON "CartItem"("cartId", "productId");
 
 -- CreateIndex
 CREATE INDEX "Order_status_idx" ON "Order"("status");
-
--- CreateIndex
-CREATE INDEX "Order_providerId_idx" ON "Order"("providerId");
 
 -- CreateIndex
 CREATE INDEX "Order_createdAt_idx" ON "Order"("createdAt");
@@ -255,10 +241,10 @@ CREATE INDEX "Order_createdAt_idx" ON "Order"("createdAt");
 CREATE INDEX "Order_userId_idx" ON "Order"("userId");
 
 -- CreateIndex
-CREATE INDEX "Product_categoryId_idx" ON "Product"("categoryId");
+CREATE INDEX "OrderItem_productId_idx" ON "OrderItem"("productId");
 
 -- CreateIndex
-CREATE INDEX "Product_brandId_idx" ON "Product"("brandId");
+CREATE INDEX "Product_categoryId_idx" ON "Product"("categoryId");
 
 -- CreateIndex
 CREATE INDEX "Product_providerId_idx" ON "Product"("providerId");
@@ -267,16 +253,37 @@ CREATE INDEX "Product_providerId_idx" ON "Product"("providerId");
 CREATE INDEX "Product_isActive_idx" ON "Product"("isActive");
 
 -- CreateIndex
-CREATE INDEX "Stock_productId_idx" ON "Stock"("productId");
+CREATE UNIQUE INDEX "Product_name_providerId_categoryId_key" ON "Product"("name", "providerId", "categoryId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ProviderProfile_userId_key" ON "ProviderProfile"("userId");
+CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
 
 -- CreateIndex
-CREATE INDEX "Review_productId_idx" ON "Review"("productId");
+CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");
 
 -- CreateIndex
-CREATE INDEX "Review_userId_idx" ON "Review"("userId");
+CREATE UNIQUE INDEX "Diet_name_key" ON "Diet"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Diet_slug_key" ON "Diet"("slug");
+
+-- CreateIndex
+CREATE INDEX "ProductDiet_dietId_idx" ON "ProductDiet"("dietId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProviderProfile_providerId_key" ON "ProviderProfile"("providerId");
+
+-- CreateIndex
+CREATE INDEX "ProviderProfile_providerId_idx" ON "ProviderProfile"("providerId");
+
+-- CreateIndex
+CREATE INDEX "ProviderProfile_id_idx" ON "ProviderProfile"("id");
+
+-- CreateIndex
+CREATE INDEX "Review_productId_userId_parentId_idx" ON "Review"("productId", "userId", "parentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Review_userId_productId_key" ON "Review"("userId", "productId");
 
 -- AddForeignKey
 ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -294,7 +301,7 @@ ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_cartId_fkey" FOREIGN KEY ("cartI
 ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Category" ADD CONSTRAINT "Category_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -303,28 +310,19 @@ ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("or
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Order" ADD CONSTRAINT "Order_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Order" ADD CONSTRAINT "Order_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "ProviderProfile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Product" ADD CONSTRAINT "Product_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "Brand"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Stock" ADD CONSTRAINT "Stock_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductDiet" ADD CONSTRAINT "ProductDiet_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProviderProfile" ADD CONSTRAINT "ProviderProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductDiet" ADD CONSTRAINT "ProductDiet_dietId_fkey" FOREIGN KEY ("dietId") REFERENCES "Diet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProviderProfile" ADD CONSTRAINT "ProviderProfile_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Review" ADD CONSTRAINT "Review_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Review"("id") ON DELETE CASCADE ON UPDATE CASCADE;
