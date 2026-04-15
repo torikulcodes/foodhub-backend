@@ -3,6 +3,8 @@ import catchAsync from "../../helper/catchAsync";
 import AppError from "../../middleware/error/app.error";
 import { cartService } from "./cart.service";
 import { User } from "better-auth";
+import { sendResponse } from "../../helper/sendResponse";
+import { StatusCodes } from "http-status-codes";
 
 const addToCart = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
@@ -35,7 +37,28 @@ const getCartItems = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteCartItem = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+
+  if (!user) {
+    throw new AppError("Unauthorized", 401);
+  }
+
+  const result = await cartService.deleteCartItem(
+    req.params.cartItemId as string,
+    user as unknown as User,
+  );
+
+  sendResponse(res, {
+    httpStatusCode: StatusCodes.OK,
+    data: result,
+    success: true,
+    message: "Cart item deleted successfully",
+  })
+});
+
 export const cartController = {
   addToCart,
   getCartItems,
+  deleteCartItem,
 };

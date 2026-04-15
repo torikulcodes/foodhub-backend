@@ -10,8 +10,16 @@ router.post(
   cartController.addToCart,
 );
 
-router.get("/",
+router.get(
+  "/",
   auth(UserRole.ADMIN, UserRole.CUSTOMER, UserRole.PROVIDER),
-  cartController.getCartItems,)
+  cartController.getCartItems,
+);
+
+router.delete(
+  "/:cartItemId",
+  auth(UserRole.ADMIN, UserRole.CUSTOMER, UserRole.PROVIDER),
+  cartController.deleteCartItem,
+);
 
 export const cartRouter: Router = router;

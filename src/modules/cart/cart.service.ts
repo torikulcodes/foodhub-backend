@@ -71,6 +71,7 @@ const getCartItems = async (user: User) => {
             name: true,
             image: true,
             id: true,
+            price: true,
           },
         },
       },
@@ -86,7 +87,36 @@ const getCartItems = async (user: User) => {
   };
 };
 
+const deleteCartItem = async (cartItemId: string, user: User) => {
+  const cartId = await prisma.cart.findUnique({
+    where: {
+      userId: user.id,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!cartId) throw new Error("User does not have a cart");
+
+  const isYourCartItem = await prisma.cartItem.findFirst({
+    where: {
+      id: cartItemId,
+      cartId: cartId.id,
+    },
+  });
+
+  if (!isYourCartItem) throw new Error("This cart item does not belong to you");
+
+  return await prisma.cartItem.delete({
+    where: {
+      id: cartItemId,
+    },
+  });
+};
+
 export const cartService = {
   addToCart,
   getCartItems,
+  deleteCartItem,
 };

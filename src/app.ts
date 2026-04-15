@@ -18,6 +18,7 @@ app.use(
   cors({
     origin: process.env.App_URL || "http://localhost:3000",
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   }),
 );
 app.all("/api/auth/*splat", toNodeHandler(auth));
