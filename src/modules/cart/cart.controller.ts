@@ -16,7 +16,6 @@ const addToCart = catchAsync(async (req: Request, res: Response) => {
   const data = req.body;
   const result = await cartService.addToCart(data, user as unknown as User);
 
-  console.log(data);
   res.status(201).json({
     success: true,
     message: "Product added to cart successfully",

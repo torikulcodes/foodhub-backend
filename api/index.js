@@ -329,7 +329,10 @@ var PrismaClient = getPrismaClientClass();
 // src/lib/prisma.ts
 var connectionString = `${process.env.DATABASE_URL}`;
 var adapter = new PrismaPg({ connectionString });
-var prisma = new PrismaClient({ adapter });
+var prisma = new PrismaClient({
+  adapter,
+  log: ["query", "info", "warn", "error"]
+});
 
 // src/lib/auth.ts
 var isProd = process.env.NODE_ENV === "production";
@@ -379,6 +382,10 @@ var auth = betterAuth({
       secure: isProd,
       httpOnly: true
     }
+  },
+  logger: {
+    level: "debug",
+    logger: console
   }
 });
 
@@ -1131,7 +1138,6 @@ var getAllProducts = async (query) => {
     diets: { include: { diet: { select: { name: true, id: true } } } },
     category: { select: { name: true, id: true } }
   }).search().paginate().sort().execute();
-  console.log(result);
   const formattedData = result.data.map((p) => ({
     id: p.id,
     name: p.name,
@@ -1288,8 +1294,6 @@ var getAllProducts2 = catchAsync_default(async (req, res) => {
 var getOwnProduct2 = catchAsync_default(async (req, res) => {
   const user = req.user;
   const query = req.query;
-  console.log("query", query);
-  console.log("user", user);
   if (!user) throw new app_error_default("Unauthorized", 401);
   const products = await productService.getOwnProduct(
     user,
@@ -1836,7 +1840,6 @@ var addToCart2 = catchAsync_default(async (req, res) => {
   }
   const data = req.body;
   const result = await cartService.addToCart(data, user);
-  console.log(data);
   res.status(201).json({
     success: true,
     message: "Product added to cart successfully",

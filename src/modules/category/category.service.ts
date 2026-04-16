@@ -38,7 +38,6 @@ const createCategory = async (data: Category) => {
 
 // get all categories for a provider
 const getAllCategories = async () => {
-  console.log("DB URL Check:", process.env.DATABASE_URL ? "Exists" : "Missing");
   return prisma.category.findMany();
 };
 

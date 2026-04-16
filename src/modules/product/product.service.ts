@@ -90,7 +90,6 @@ const getAllProducts = async (query: IQueryParams) => {
     .sort()
     .execute();
 
-    console.log(result)
 
   // এখানে টাইপ কাস্টিং করে দিন যাতে p.category এর সাজেশন পান
   const formattedData = (result.data as ProductWithRelations[]).map((p) => ({

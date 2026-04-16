@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx prisma-import -s 'prisma/**/*.prisma' -o prisma/schema.prisma && prisma generate && tsup src/index.ts --format esm --platform node --target node20 --outDir api --external pg-native",
+    "build": "prisma generate && tsup src/index.ts --format esm --platform node --target node20 --outDir api",
     "start": "node api/index.js",
-    "postinstall": "npx prisma-import -s 'prisma/**/*.prisma' -o prisma/schema.prisma && prisma generate"
+    "postinstall": "prisma generate && prisma migrate deploy"
   },
   "keywords": [],
   "author": "",

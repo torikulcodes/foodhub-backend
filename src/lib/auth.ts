@@ -53,4 +53,8 @@ export const auth = betterAuth({
       httpOnly: true,
     },
   },
+  logger: {
+    level: "debug",
+    logger: console,
+  },
 });

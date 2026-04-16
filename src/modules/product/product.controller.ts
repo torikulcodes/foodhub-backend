@@ -88,8 +88,6 @@ const getOwnProduct = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
   const query = req.query;
 
-  console.log("query", query);
-  console.log("user", user);
   if (!user) throw new AppError("Unauthorized", 401);
   const products = await productService.getOwnProduct(
     user,
