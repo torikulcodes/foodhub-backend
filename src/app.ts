@@ -15,30 +15,15 @@ import errorHandler from "./middleware/error/globalErrorHandler.js";
 const app: Application = express();
 
 const allowedOrigins = [
-  process.env.APP_URL,
   "http://localhost:3000",
   "https://foodhub-client-eta.vercel.app",
-].filter(Boolean);
+  "https://foodhub-backend-production-d315.up.railway.app",
+];
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      const isAllowed =
-        allowedOrigins.includes(origin) ||
-        /^https:\/\/next-blog-client.*\.vercel\.app$/.test(origin) ||
-        /^https:\/\/.*\.vercel\.app$/.test(origin);
-
-      if (isAllowed) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origin ${origin} not allowed by CORS`));
-      }
-    },
+    origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-    exposedHeaders: ["Set-Cookie"],
   }),
 );
 
@@ -56,7 +41,6 @@ app.use("/api/v1/cart", cartRouter);
 
 app.get("/", (req, res) => {
   res.send("FoodHub Backend is running");
-
 });
 
 app.use(notFound);

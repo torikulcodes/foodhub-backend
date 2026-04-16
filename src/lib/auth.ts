@@ -48,8 +48,8 @@ export const auth = betterAuth({
     },
     disableCSRFCheck: true,
     cookieOptions: {
-      sameSite: isProd ? "none" : "lax",
-      secure: isProd,
+      sameSite: "none",
+      secure: true,
       httpOnly: true,
     },
   },
