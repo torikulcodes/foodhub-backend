@@ -9,6 +9,9 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: "https://foodhub-client-eta.vercel.app",
+
   trustedOrigins: [
     "http://localhost:3000",
     "https://foodhub-client-eta.vercel.app",
@@ -34,28 +37,19 @@ export const auth = betterAuth({
     autoSignIn: false,
     requireEmailVerification: false,
   },
+
   session: {
     cookieCache: {
-      enabled: true,
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      enabled: false,
     },
   },
   advanced: {
     cookiePrefix: "better-auth",
-    useSecureCookies: process.env.NODE_ENV === "production",
-    crossSubDomainCookies: {
-      enabled: false,
-    },
-    disableCSRFCheck: true,
-    cookieOptions: {
-      sameSite: "none",
-      secure: true,
-      httpOnly: true,
-    },
+    cookieSameSite: "lax",
+    useSecureCookies: true,
   },
   logger: {
     level: "debug",
     logger: console,
   },
 });
-
