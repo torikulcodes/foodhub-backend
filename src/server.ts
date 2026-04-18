@@ -16,6 +16,8 @@ const bootstrap = async() => {
 process.on("SIGTERM", () => {
     console.log("SIGTERM signal received. Shutting down server...");
 
+    // dd
+
     if(server){
         server.close(() => {
             console.log("Server closed gracefully.");
