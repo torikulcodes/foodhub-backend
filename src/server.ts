@@ -1,75 +1,61 @@
 import { Server } from "http";
-import app from "./app";
-let server : Server;
+import app from "./app.js";
+
+let server: Server;
 
 const port = process.env.PORT || 5000;
-const bootstrap = async() => {
-    try {
-        server = app.listen(port, () => {
-            console.log(`Server is running on http://localhost:${port}`);
-        });
-    } catch (error) {
-        console.error('Failed to start server:', error);
-    }   
-}
-// SIGTERM signal handler
+
+const bootstrap = async () => {
+  try {
+    server = app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
 process.on("SIGTERM", () => {
-    console.log("SIGTERM signal received. Shutting down server...");
+  console.log("SIGTERM received");
 
-    // dd
-
-    if(server){
-        server.close(() => {
-            console.log("Server closed gracefully.");
-            process.exit(1);
-        });
-    } 
-    
-    process.exit(1);
-    
-})
-
-// SIGINT signal handler
-
-process.on("SIGINT", () => {
-    console.log("SIGINT signal received. Shutting down server...");
-
-    if(server){
-        server.close(() => {
-            console.log("Server closed gracefully.");
-            process.exit(1);
-        });
-
-    }
-
-    process.exit(1);
+  if (server) {
+    server.close(() => {
+      console.log("Server closed");
+      process.exit(0);
+    });
+  }
 });
 
-//uncaught exception handler
-process.on('uncaughtException', (error) => {
-    console.log("Uncaught Exception Detected... Shutting down server", error);
+process.on("SIGINT", () => {
+  console.log("SIGINT received");
 
-    if(server){
-        server.close(() => {
-            process.exit(1);
-        })
-    }
+  if (server) {
+    server.close(() => {
+      console.log("Server closed");
+      process.exit(0);
+    });
+  }
+});
 
-    process.exit(1);
-})
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
+  process.exit(1);
+});
 
 process.on("unhandledRejection", (error) => {
-    console.log("Unhandled Rejection Detected... Shutting down server", error);
+  console.error("Unhandled Rejection:", error);
 
-    if(server){
-        server.close(() => {
-            process.exit(1);
-        })
-    }
-
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  } else {
     process.exit(1);
-})
+  }
+});
 
-//unhandled rejection handler
-
-bootstrap();
+bootstrap().catch((err) => {
+  console.error("Bootstrap failed:", err);
+  process.exit(1);
+});

@@ -10,8 +10,7 @@ export const auth = betterAuth({
   }),
 
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: "https://foodhub-client-eta.vercel.app",
-
+  baseURL: process.env.BETTER_AUTH_URL!,
   trustedOrigins: [
     "http://localhost:3000",
     "https://foodhub-client-eta.vercel.app",
@@ -45,7 +44,7 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "better-auth",
-    cookieSameSite: "lax",
+    cookieSameSite: "none",
     useSecureCookies: true,
   },
   logger: {

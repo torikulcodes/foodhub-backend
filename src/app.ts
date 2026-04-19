@@ -14,21 +14,24 @@ import errorHandler from "./middleware/error/globalErrorHandler.js";
 
 const app: Application = express();
 
-// const allowedOrigins = [
-//   process.env.APP_URL ||
-//     "https://foodhub-client-eta.vercel.app" ||
-//     "http://localhost:3000",
-// ];
-
 app.use(
   cors({
-    origin: [
-      process.env.APP_URL as string,
-      "https://foodhub-client-eta.vercel.app",
-    ],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:3000",
+        process.env.App_URL,
+        "https://foodhub-client-eta.vercel.app",
+      ];
+
+      const isVercelPreview = origin && origin.includes(".vercel.app");
+
+      if (!origin || allowedOrigins.includes(origin) || isVercelPreview) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "cookie", "set-cookie"],
   }),
 );
 
