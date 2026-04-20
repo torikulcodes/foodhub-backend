@@ -1,26 +1,21 @@
 {
   "compilerOptions": {
     "outDir": "./dist",
-    "module": "esnext",
-    /* Change moduleResolution to NodeNext for better ESM support */
-    "moduleResolution": "bundler", 
+    "rootDir": ".",
+
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
     "target": "ES2023",
     "types": ["node"],
-    
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
 
     "strict": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "esModuleInterop": true
+
+    "sourceMap": true
   },
-  "include": ["src/**/*", "prisma.config.ts", "prisma/**/*"],
-  "exclude": ["node_modules", "dist", "generated/prisma"]
+
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

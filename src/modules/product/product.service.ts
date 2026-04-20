@@ -3,7 +3,7 @@ import { CreateProduct } from "../../type/product.type.js";
 import { User } from "../../type/user.type.js";
 import AppError from "../../middleware/error/app.error.js";
 import { QueryBuilder } from "../../helper/queryBuilder.js";
-import { Prisma, Product } from "../../../generated/prisma/client";
+import { Prisma, Product } from "../../../generated/prisma/client.js";
 import { IQueryParams } from "../../type/queryBuilder.js";
 
 const createProduct = async (data: CreateProduct, user: User) => {
