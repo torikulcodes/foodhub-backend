@@ -4,7 +4,7 @@
   "description": "",
   "main": "app/index.js",
   "scripts": {
-    "build": "prisma generate && tsup src/index.ts --format esm --platform node --target node20 --outDir app --external pg-native",
+    "build": "tsup src/index.ts --format esm --outDir app --target node20 --splitting false",
     "start": "node app/index.js",
     "postinstall": "prisma generate",
     "vercel-build": "prisma generate && tsc",

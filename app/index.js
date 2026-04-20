@@ -2004,7 +2004,7 @@ app.use(
     origin: (origin, callback) => {
       const allowedOrigins = [
         "http://localhost:3000",
-        process.env.App_URL,
+        process.env.APP_URL,
         "https://foodhub-client-eta.vercel.app"
       ];
       const isVercelPreview = origin && origin.includes(".vercel.app");

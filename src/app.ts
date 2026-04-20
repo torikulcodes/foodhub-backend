@@ -1,16 +1,16 @@
 import { toNodeHandler } from "better-auth/node";
 import express, { Application } from "express";
 import cors from "cors";
-import { auth } from "./lib/auth";
-import { userRouter } from "./modules/user/user.router";
-import { categoryRouter } from "./modules/category/category.router";
-import { providerProfileRouter } from "./modules/providerProfile/provider.router";
-import { productRouter } from "./modules/product/product.router";
-import { dietRouter } from "./modules/diets/diets.router";
-import { orderRouter } from "./modules/order/order.router";
-import { cartRouter } from "./modules/cart/cart.route";
-import { notFound } from "./middleware/notFound";
-import errorHandler from "./middleware/error/globalErrorHandler";
+import { auth } from "./lib/auth.js";
+import { userRouter } from "./modules/user/user.router.js";
+import { categoryRouter } from "./modules/category/category.router.js";
+import { providerProfileRouter } from "./modules/providerProfile/provider.router.js";
+import { productRouter } from "./modules/product/product.router.js";
+import { dietRouter } from "./modules/diets/diets.router.js";
+import { orderRouter } from "./modules/order/order.router.js";
+import { cartRouter } from "./modules/cart/cart.route.js";
+import { notFound } from "./middleware/notFound.js";
+import errorHandler from "./middleware/error/globalErrorHandler.js";
 
 const app: Application = express();
 
@@ -19,7 +19,7 @@ app.use(
     origin: (origin, callback) => {
       const allowedOrigins = [
         "http://localhost:3000",
-        process.env.App_URL,
+        process.env.APP_URL,
         "https://foodhub-client-eta.vercel.app",
       ];
 
