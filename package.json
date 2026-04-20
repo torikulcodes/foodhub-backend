@@ -2,7 +2,6 @@
   "name": "foodhub-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "app/index.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/scr/server.js",
