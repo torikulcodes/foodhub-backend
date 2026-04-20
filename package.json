@@ -2,9 +2,10 @@
   "name": "foodhub-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app/index.js",
   "scripts": {
     "build": "prisma generate && tsup src/index.ts --format esm --platform node --target node20 --outDir app --external pg-native",
+    "start": "node app/index.js",
     "postinstall": "prisma generate",
     "vercel-build": "prisma generate && tsc",
     "dev": "tsx watch src/server.ts"
