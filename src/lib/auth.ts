@@ -3,7 +3,6 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma.js";
 import { envVariables } from "../config/env.js";
 
-const isProd = envVariables.NODE_ENV === envVariables.NODE_ENV;
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {

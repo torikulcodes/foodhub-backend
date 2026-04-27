@@ -353,7 +353,6 @@ dotenv.config({
 var loadEnvVariables = () => {
   const requiredEnv = [
     "DATABASE_URL",
-    "NODE_ENV",
     "PORT",
     "BETTER_AUTH_SECRET",
     "BETTER_AUTH_URL",
@@ -369,7 +368,6 @@ var loadEnvVariables = () => {
   });
   return {
     DATABASE_URL: process.env.DATABASE_URL,
-    NODE_ENV: process.env.NODE_ENV,
     PORT: process.env.PORT,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
@@ -386,7 +384,6 @@ var prisma = new PrismaClient({
 });
 
 // src/lib/auth.ts
-var isProd = envVariables.NODE_ENV === envVariables.NODE_ENV;
 var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
