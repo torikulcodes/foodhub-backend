@@ -1,9 +1,17 @@
-import app from "./app.js";
-import { envVariables } from "./config/env.js";
+import app from "./app";
+import { prisma } from "./lib/prisma";
 
-const port = envVariables.PORT || 5000;
+const bootstrap = async () => {
+  try {
+    await prisma.$connect();
+    app.listen(process.env.PORT, () => {
+      console.log(`Server is running on http://localhost:${process.env.PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+};
 
-const server = app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
-
+bootstrap();

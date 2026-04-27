@@ -11,27 +11,15 @@ import { orderRouter } from "./modules/order/order.router.js";
 import { cartRouter } from "./modules/cart/cart.route.js";
 import { notFound } from "./middleware/notFound.js";
 import errorHandler from "./middleware/error/globalErrorHandler.js";
+import cookieParser from "cookie-parser";
 import { envVariables } from "./config/env.js";
 
 const app: Application = express();
 
+app.use(cookieParser());
 app.use(
   cors({
-    origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:3000",
-        envVariables.APP_URL,
-        "https://foodhub-client-eta.vercel.app",
-      ];
-
-      const isVercelPreview = origin && origin.includes(".vercel.app");
-
-      if (!origin || allowedOrigins.includes(origin) || isVercelPreview) {
-        callback(null, true);
-      } else {
-        callback(null, false);
-      }
-    },
+    origin: [envVariables.APP_URL, "http://localhost:3000"],
     credentials: true,
   }),
 );
