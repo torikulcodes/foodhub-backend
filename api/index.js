@@ -326,21 +326,73 @@ var OrderItemStatus = {
 globalThis["__dirname"] = path.dirname(fileURLToPath(import.meta.url));
 var PrismaClient = getPrismaClientClass();
 
+// src/config/env.ts
+import dotenv from "dotenv";
+import path2 from "path";
+
+// src/middleware/error/app.error.ts
+var AppError = class extends Error {
+  statusCode;
+  isOperational;
+  constructor(message, statusCode = 400) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = true;
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
+};
+var app_error_default = AppError;
+
+// src/config/env.ts
+import { StatusCodes } from "http-status-codes";
+dotenv.config({
+  path: path2.join(process.cwd(), ".env"),
+  override: true
+});
+var loadEnvVariables = () => {
+  const requiredEnv = [
+    "DATABASE_URL",
+    "NODE_ENV",
+    "PORT",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "APP_URL"
+  ];
+  requiredEnv.forEach((env) => {
+    if (!process.env[env]) {
+      throw new app_error_default(
+        `Missing env variable: ${env}`,
+        StatusCodes.BAD_REQUEST
+      );
+    }
+  });
+  return {
+    DATABASE_URL: process.env.DATABASE_URL,
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
+    APP_URL: process.env.APP_URL
+  };
+};
+var envVariables = loadEnvVariables();
+
 // src/lib/prisma.ts
-var connectionString = `${process.env.DATABASE_URL}`;
+var connectionString = `${envVariables.DATABASE_URL}`;
 var adapter = new PrismaPg({ connectionString });
 var prisma = new PrismaClient({
   adapter
 });
 
 // src/lib/auth.ts
-var isProd = process.env.NODE_ENV === "production";
+var isProd = envVariables.NODE_ENV === envVariables.NODE_ENV;
 var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
   }),
-  secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL,
+  secret: envVariables.BETTER_AUTH_SECRET,
+  baseURL: envVariables.BETTER_AUTH_URL,
   trustedOrigins: [
     "http://localhost:3000",
     "https://foodhub-client-eta.vercel.app"
@@ -468,20 +520,6 @@ var normalizeName = (name, forSlug = false) => {
   }
   return normalized;
 };
-
-// src/middleware/error/app.error.ts
-var AppError = class extends Error {
-  statusCode;
-  isOperational;
-  constructor(message, statusCode = 400) {
-    super(message);
-    this.statusCode = statusCode;
-    this.isOperational = true;
-    this.name = this.constructor.name;
-    Error.captureStackTrace(this, this.constructor);
-  }
-};
-var app_error_default = AppError;
 
 // src/modules/category/category.service.ts
 var createCategory = async (data) => {
@@ -1224,7 +1262,7 @@ var sendResponse = (res, responseData) => {
 };
 
 // src/modules/product/product.controller.ts
-import { StatusCodes } from "http-status-codes";
+import { StatusCodes as StatusCodes2 } from "http-status-codes";
 var createProduct2 = catchAsync_default(async (req, res) => {
   const user = req.user;
   if (!user) throw new app_error_default("Unauthorized", 401);
@@ -1275,7 +1313,7 @@ var getAllProducts2 = catchAsync_default(async (req, res) => {
   const query = req.query;
   const products = await productService.getAllProducts(query);
   sendResponse(res, {
-    httpStatusCode: StatusCodes.OK,
+    httpStatusCode: StatusCodes2.OK,
     data: products.data,
     meta: products.meta,
     success: true,
@@ -1291,7 +1329,7 @@ var getOwnProduct2 = catchAsync_default(async (req, res) => {
     query
   );
   sendResponse(res, {
-    httpStatusCode: StatusCodes.OK,
+    httpStatusCode: StatusCodes2.OK,
     data: products,
     success: true,
     message: "Product fetched successfully"
@@ -1301,7 +1339,7 @@ var getProductById2 = catchAsync_default(async (req, res) => {
   const id = req.params.id;
   const product = await productService.getProductById(id);
   sendResponse(res, {
-    httpStatusCode: StatusCodes.OK,
+    httpStatusCode: StatusCodes2.OK,
     data: product,
     success: true,
     message: "Product fetched successfully"
@@ -1823,7 +1861,7 @@ var cartService = {
 };
 
 // src/modules/cart/cart.controller.ts
-import { StatusCodes as StatusCodes2 } from "http-status-codes";
+import { StatusCodes as StatusCodes3 } from "http-status-codes";
 var addToCart2 = catchAsync_default(async (req, res) => {
   const user = req.user;
   if (!user) {
@@ -1859,7 +1897,7 @@ var deleteCartItem2 = catchAsync_default(async (req, res) => {
     user
   );
   sendResponse(res, {
-    httpStatusCode: StatusCodes2.OK,
+    httpStatusCode: StatusCodes3.OK,
     data: result,
     success: true,
     message: "Cart item deleted successfully"
@@ -2004,7 +2042,7 @@ app.use(
     origin: (origin, callback) => {
       const allowedOrigins = [
         "http://localhost:3000",
-        process.env.APP_URL,
+        envVariables.APP_URL,
         "https://foodhub-client-eta.vercel.app"
       ];
       const isVercelPreview = origin && origin.includes(".vercel.app");
