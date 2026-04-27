@@ -439,7 +439,7 @@ var auth = betterAuth({
     provider: "postgresql"
   }),
   baseURL: envVariables.APP_URL,
-  trustedOrigins: [envVariables.APP_URL],
+  trustedOrigins: [envVariables.APP_URL, "http://localhost:3000"],
   emailAndPassword: {
     enabled: true
   },
@@ -468,27 +468,21 @@ var auth = betterAuth({
   //     clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
   //   },
   // },
-  advanced: {
-    cookies: {
-      session_token: {
-        name: "session_token",
-        attributes: {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          partitioned: true
-        }
-      },
-      state: {
-        name: "session_token",
-        attributes: {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          partitioned: true
-        }
-      }
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60
+      // 5 minutes
     }
+  },
+  advanced: {
+    cookiePrefix: "better-auth",
+    useSecureCookies: process.env.NODE_ENV === "production",
+    crossSubDomainCookies: {
+      enabled: false
+    },
+    disableCSRFCheck: true
+    // Allow requests without Origin header (Postman, mobile apps, etc.)
   },
   plugins: [oAuthProxy()]
 });
@@ -2050,23 +2044,27 @@ function errorHandler(err, req, res, next) {
 var globalErrorHandler_default = errorHandler;
 
 // src/app.ts
+import cookieParser from "cookie-parser";
 var app = express();
+app.use(cookieParser());
+var allowedOrigins = [
+  envVariables.APP_URL || "http://localhost:3000"
+].filter(Boolean);
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:3000",
-        envVariables.APP_URL,
-        "https://foodhub-client-eta.vercel.app"
-      ];
-      const isVercelPreview = origin && origin.includes(".vercel.app");
-      if (!origin || allowedOrigins.includes(origin) || isVercelPreview) {
+      if (!origin) return callback(null, true);
+      const isAllowed = allowedOrigins.includes(origin) || /^https:\/\/next-blog-client.*\.vercel\.app$/.test(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin);
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(null, false);
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
       }
     },
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"]
   })
 );
 app.all("/api/auth/*splat", toNodeHandler(auth));
