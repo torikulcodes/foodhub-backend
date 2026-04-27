@@ -3,7 +3,7 @@
     "outDir": "./dist",
     "rootDir": ".",
 
-    "module": "commonjs",
+    "module": "esnext",
     "moduleResolution": "bundler",
 
     "target": "ES2023",
