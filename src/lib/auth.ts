@@ -43,10 +43,13 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "better-auth",
-    useSecureCookies: envVariables.NODE_ENV === "production",
+
+    useSecureCookies: true, // Vercel = always HTTPS → safe true
+
     defaultCookieAttributes: {
-      sameSite: envVariables.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: "none", // cross-site login দরকার হলে always none
     },
+
     crossSubDomainCookies: {
       enabled: true,
       domain: ".vercel.app",

@@ -353,7 +353,6 @@ dotenv.config({
 var loadEnvVariables = () => {
   const requiredEnv = [
     "DATABASE_URL",
-    "NODE_ENV",
     "PORT",
     "BETTER_AUTH_SECRET",
     "BETTER_AUTH_URL",
@@ -369,7 +368,6 @@ var loadEnvVariables = () => {
   });
   return {
     DATABASE_URL: process.env.DATABASE_URL,
-    NODE_ENV: process.env.NODE_ENV,
     PORT: process.env.PORT,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
@@ -422,9 +420,11 @@ var auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "better-auth",
-    useSecureCookies: envVariables.NODE_ENV === "production",
+    useSecureCookies: true,
+    // Vercel = always HTTPS → safe true
     defaultCookieAttributes: {
-      sameSite: envVariables.NODE_ENV === "production" ? "none" : "lax"
+      sameSite: "none"
+      // cross-site login দরকার হলে always none
     },
     crossSubDomainCookies: {
       enabled: true,
