@@ -42,9 +42,9 @@ async function decodeBase64AsWasm(wasmBase64) {
   return new WebAssembly.Module(wasmArray);
 }
 config.compilerWasm = {
-  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.js"),
+  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.mjs"),
   getQueryCompilerWasmModule: async () => {
-    const { wasm } = await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.wasm-base64.js");
+    const { wasm } = await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.wasm-base64.mjs");
     return await decodeBase64AsWasm(wasm);
   },
   importName: "./query_compiler_fast_bg.js"
@@ -353,6 +353,7 @@ dotenv.config({
 var loadEnvVariables = () => {
   const requiredEnv = [
     "DATABASE_URL",
+    "NODE_ENV",
     "PORT",
     "BETTER_AUTH_SECRET",
     "BETTER_AUTH_URL",
@@ -368,6 +369,7 @@ var loadEnvVariables = () => {
   });
   return {
     DATABASE_URL: process.env.DATABASE_URL,
+    NODE_ENV: process.env.NODE_ENV,
     PORT: process.env.PORT,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
@@ -420,8 +422,14 @@ var auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "better-auth",
-    cookieSameSite: "none",
-    useSecureCookies: true
+    useSecureCookies: envVariables.NODE_ENV === "production",
+    defaultCookieAttributes: {
+      sameSite: envVariables.NODE_ENV === "production" ? "none" : "lax"
+    },
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: ".vercel.app"
+    }
   },
   logger: {
     level: "debug",

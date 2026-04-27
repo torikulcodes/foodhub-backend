@@ -3,7 +3,6 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma.js";
 import { envVariables } from "../config/env.js";
 
-
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -44,8 +43,14 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "better-auth",
-    cookieSameSite: "none",
-    useSecureCookies: true,
+    useSecureCookies: envVariables.NODE_ENV === "production",
+    defaultCookieAttributes: {
+      sameSite: envVariables.NODE_ENV === "production" ? "none" : "lax",
+    },
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: ".vercel.app",
+    },
   },
   logger: {
     level: "debug",
