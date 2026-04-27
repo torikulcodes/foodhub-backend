@@ -1,62 +1,71 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { prisma } from "./prisma.js";
-import { envVariables } from "../config/env.js";
+import { prisma } from "./prisma";
+import { oAuthProxy } from "better-auth/plugins";
+import { envVariables } from "../config/env";
+import { UserRole } from "../middleware/auth";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
 
-  secret: envVariables.BETTER_AUTH_SECRET,
-  baseURL: envVariables.BETTER_AUTH_URL,
-  trustedOrigins: [
-    "http://localhost:3000",
-    "https://foodhub-client-eta.vercel.app",
-  ],
+  baseURL: envVariables.APP_URL,
+  trustedOrigins: [envVariables.APP_URL!],
+
+  emailAndPassword: {
+    enabled: true,
+  },
 
   user: {
     additionalFields: {
       role: {
         type: "string",
-        defaultValue: "USER",
-        required: false,
+        required: true,
+        defaultValue: UserRole.CUSTOMER,
       },
       status: {
         type: "string",
+        required: true,
         defaultValue: "ACTIVE",
-        required: false,
+      },
+    },
+  },
+  
+  // socialProviders: {
+  //   google: {
+  //     clientId: process.env.GOOGLE_CLIENT_ID as string,
+  //     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+  //     prompt: "select_account",
+  //   },
+  //   github: {
+  //     clientId: process.env.GITHUB_CLIENT_ID as string,
+  //     clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+  //   },
+  // },
+
+  advanced: {
+    cookies: {
+      session_token: {
+        name: "session_token",
+        attributes: {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          partitioned: true,
+        },
+      },
+      state: {
+        name: "session_token",
+        attributes: {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          partitioned: true,
+        },
       },
     },
   },
 
-  emailAndPassword: {
-    enabled: true,
-    autoSignIn: false,
-    requireEmailVerification: false,
-  },
-
-  session: {
-    cookieCache: {
-      enabled: false,
-    },
-  },
-  advanced: {
-    cookiePrefix: "better-auth",
-
-    useSecureCookies: true, // Vercel = always HTTPS → safe true
-
-    defaultCookieAttributes: {
-      sameSite: "none", // cross-site login দরকার হলে always none
-    },
-
-    crossSubDomainCookies: {
-      enabled: true,
-      domain: ".vercel.app",
-    },
-  },
-  logger: {
-    level: "debug",
-    logger: console,
-  },
+  plugins: [oAuthProxy()],
 });

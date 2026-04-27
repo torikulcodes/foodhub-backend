@@ -1,13 +1,12 @@
 model User {
-  id              String           @id
-  name            String
-  email           String           @unique
-  emailVerified   Boolean          @default(true)
-  image           String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id            String  @id
+  name          String
+  email         String  @unique
+  emailVerified Boolean @default(true)
+  image         String?
   role            String           @default("CUSTOMER")
   status          String           @default("ACTIVE")
+  
   cart            Cart?            @relation("UserCarts")
   order           Order[]
   product         Product[]
@@ -15,6 +14,9 @@ model User {
   review          Review[]
   accounts        Account[]
   sessions        Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("user")
 }
