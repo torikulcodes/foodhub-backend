@@ -56,7 +56,7 @@ export const auth = betterAuth({
     crossSubDomainCookies: {
       enabled: false,
     },
-    disableCSRFCheck: true, // Allow requests without Origin header (Postman, mobile apps, etc.)
+    disableCSRFCheck: true, 
   },
 
   plugins: [oAuthProxy()],
