@@ -9,7 +9,16 @@ import { IQueryParams } from "../../type/queryBuilder.js";
 const createProduct = async (data: CreateProduct, user: User) => {
   const { diets, ...productData } = data;
 
+  const existProduct = await prisma.product.findFirst({
+    where: { providerId: user.id, isActive: true, categoryId: data.categoryId,name:data.name },
+  });
+
+  if (existProduct) {
+    throw new AppError("Product already exists", 400);
+  }
+
   let dietIds: string[] = [];
+
   if (diets && diets.length > 0) {
     if (!Array.isArray(diets))
       throw new AppError("diets must be an array of ids", 400);
@@ -24,7 +33,7 @@ const createProduct = async (data: CreateProduct, user: User) => {
     dietIds = uniqueDietIds;
   }
 
-  const productWithDiets = await prisma.$transaction(async (tx:any) => {
+  const productWithDiets = await prisma.$transaction(async (tx: any) => {
     const product = await tx.product.create({
       data: {
         ...productData,
@@ -90,7 +99,6 @@ const getAllProducts = async (query: IQueryParams) => {
     .sort()
     .execute();
 
-
   // এখানে টাইপ কাস্টিং করে দিন যাতে p.category এর সাজেশন পান
   const formattedData = (result.data as ProductWithRelations[]).map((p) => ({
     id: p.id,
@@ -135,18 +143,16 @@ const getProductById = async (id: string) => {
           id: true,
         },
       },
-   provider:{
-    select:{
-      name:true,
-      
-    }
-   }
+      provider: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 
   return data;
 };
-
 
 const getOwnProduct = async (user: User, query: IQueryParams) => {
   const queryBuilder = new QueryBuilder<
